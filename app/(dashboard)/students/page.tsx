@@ -6,6 +6,7 @@ import { ConfirmSubmit } from "@/components/management/confirm-submit";
 import { ManagementShell } from "@/components/management/management-shell";
 import { StudentForm } from "@/components/management/student-form";
 import { StudentAvatar } from "@/components/students/student-avatar";
+import { StudentCsvImport } from "@/components/students/student-csv-import";
 import { getManagementData } from "@/lib/management/get-management-data";
 
 export const metadata: Metadata = { title: "นักเรียน" };
@@ -77,11 +78,7 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
         </section>
         <aside className="grid content-start gap-4">
           <StudentForm classrooms={data.classrooms.filter((item) => item.isActive)} disabled={disabled} />
-          <div className="rounded-[28px] bg-white/70 p-5 ring-1 ring-white">
-            <h2 className="text-sm font-black text-[#293562]">นำเข้า CSV</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">เตรียมไว้สำหรับระยะต่อยอด ปุ่มนำเข้าจำนวนมากยังไม่เปิดเพื่อกันข้อมูลซ้ำโดยไม่ได้ตรวจ</p>
-            <button type="button" disabled className="mt-3 h-10 rounded-2xl bg-slate-100 px-4 text-xs font-extrabold text-slate-400">กำลังพัฒนา</button>
-          </div>
+          <StudentCsvImport classrooms={data.classrooms.filter((item) => item.isActive)} disabled={disabled} />
         </aside>
       </div>
     </ManagementShell>

@@ -238,6 +238,10 @@ export type Database = {
         Args: { target_subject_id: string; request_user_id?: string };
         Returns: boolean;
       };
+      import_students_from_csv: {
+        Args: { p_classroom_id: string; p_rows: Json };
+        Returns: number;
+      };
       upsert_student_with_pin: {
         Args: {
           p_student_id?: string | null;

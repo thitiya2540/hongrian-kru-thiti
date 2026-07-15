@@ -11,7 +11,8 @@ import {
   studentStatusSchema,
   subjectFormSchema,
 } from "@/lib/validations/management";
-import type { StudentStatus } from "@/types/database";
+import { parseStudentCsv } from "@/lib/students/csv";
+import type { Json, StudentStatus } from "@/types/database";
 
 const STUDENT_AVATAR_BUCKET = "student-avatars";
 const STUDENT_AVATAR_MAX_SIZE = 2 * 1024 * 1024;
@@ -25,6 +26,12 @@ const STUDENT_AVATAR_EXTENSIONS: Record<string, string> = {
 export type ClassroomFormState = {
   status?: "success" | "error";
   message?: string;
+};
+
+export type StudentCsvImportState = {
+  status?: "success" | "error";
+  message?: string;
+  importedCount?: number;
 };
 
 function value(formData: FormData, key: string) {
@@ -234,6 +241,61 @@ export async function saveStudentAction(formData: FormData) {
   revalidatePath("/classrooms");
   revalidatePath("/dashboard");
   revalidatePath("/quick-score");
+}
+
+function csvImportErrorMessage(message: string) {
+  const messages: Record<string, string> = {
+    classroom_not_allowed: "คุณไม่มีสิทธิ์นำเข้าข้อมูลในห้องเรียนนี้",
+    csv_rows_required: "ไม่พบรายชื่อนักเรียนในไฟล์",
+    csv_rows_limit_exceeded: "นำเข้าได้ครั้งละไม่เกิน 200 คน",
+    csv_duplicate_student_code: "พบรหัสนักเรียนซ้ำกันในไฟล์ ระบบยังไม่ได้บันทึกข้อมูล",
+    csv_student_code_already_exists: "มีรหัสนักเรียนนี้อยู่ในระบบแล้ว ระบบยังไม่ได้บันทึกข้อมูล",
+    csv_duplicate_identity_number: "พบเลขประจำตัวซ้ำกันในไฟล์ ระบบยังไม่ได้บันทึกข้อมูล",
+    csv_identity_number_already_exists: "มีเลขประจำตัวนี้อยู่ในระบบแล้ว ระบบยังไม่ได้บันทึกข้อมูล",
+  };
+  if (messages[message]) return messages[message];
+  if (message.startsWith("csv_invalid_")) return "พบข้อมูลไม่ถูกต้องในไฟล์ กรุณาตรวจข้อมูลตามไฟล์ตัวอย่างแล้วลองใหม่";
+  return "นำเข้ารายชื่อนักเรียนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
+}
+
+export async function importStudentsCsvAction(_previousState: StudentCsvImportState, formData: FormData): Promise<StudentCsvImportState> {
+  try {
+    const classroomId = idSchema.safeParse(value(formData, "classroomId"));
+    if (!classroomId.success) return { status: "error", message: "กรุณาเลือกห้องเรียนก่อนนำเข้า" };
+
+    const file = formData.get("csvFile");
+    if (!(file instanceof File) || file.size === 0) return { status: "error", message: "กรุณาเลือกไฟล์ CSV" };
+    if (file.size > 1024 * 1024) return { status: "error", message: "ไฟล์ CSV ต้องมีขนาดไม่เกิน 1MB" };
+
+    const parsed = parseStudentCsv(await file.text());
+    if (parsed.errors.length > 0) {
+      return { status: "error", message: `${parsed.errors[0]}${parsed.errors.length > 1 ? ` (พบทั้งหมด ${parsed.errors.length} จุด)` : ""}` };
+    }
+
+    const { supabase } = await getAuthenticatedClient();
+    const { data, error } = await supabase.rpc("import_students_from_csv", {
+      p_classroom_id: classroomId.data,
+      p_rows: parsed.rows.map((row) => ({
+        studentCode: row.studentCode,
+        identityNumber: row.identityNumber,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        nickname: row.nickname,
+        numberInClass: row.numberInClass,
+        pin: row.pin,
+      })) as Json,
+    });
+    if (error) return { status: "error", message: csvImportErrorMessage(error.message) };
+
+    revalidatePath("/students");
+    revalidatePath("/classrooms");
+    revalidatePath(`/classrooms/${classroomId.data}`);
+    revalidatePath("/dashboard");
+    revalidatePath("/quick-score");
+    return { status: "success", message: `นำเข้านักเรียน ${data ?? parsed.rows.length} คนเรียบร้อยแล้ว`, importedCount: data ?? parsed.rows.length };
+  } catch (error) {
+    return { status: "error", message: error instanceof Error ? csvImportErrorMessage(error.message) : "นำเข้ารายชื่อนักเรียนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง" };
+  }
 }
 
 export async function updateStudentStatusAction(formData: FormData) {

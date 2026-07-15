@@ -1,16 +1,37 @@
-import { saveClassroomAction } from "@/actions/management";
+"use client";
+
+import { useActionState } from "react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { saveClassroomAction, type ClassroomFormState } from "@/actions/management";
 import { SubmitButton } from "@/components/management/submit-button";
 import type { ClassroomSummary, TermOption } from "@/types/management";
 
 const colors = ["#6956D9", "#35A768", "#E88524", "#0EA5E9", "#EC4899"];
+const initialState: ClassroomFormState = {};
 
 export function ClassroomForm({ terms, classroom, disabled = false, compact = false }: { terms: TermOption[]; classroom?: ClassroomSummary; disabled?: boolean; compact?: boolean }) {
+  const [state, formAction] = useActionState(saveClassroomAction, initialState);
+
   return (
-    <form action={saveClassroomAction} className={`${compact ? "rounded-[24px] p-4 shadow-sm" : "rounded-[28px] p-5 shadow-[0_18px_50px_rgba(44,55,105,0.12)]"} border border-white/80 bg-white`}>
+    <form action={formAction} className={`${compact ? "rounded-[24px] p-4 shadow-sm" : "rounded-[28px] p-5 shadow-[0_18px_50px_rgba(44,55,105,0.12)]"} border border-white/80 bg-white`}>
       <div>
         <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-violet-500">{classroom ? "แก้ไขห้องเรียน" : "เพิ่มห้องเรียน"}</p>
         <h2 className="mt-1 text-lg font-black text-[#293562]">{classroom ? `ป.${classroom.gradeLevel}/${classroom.room}` : "สร้างห้องเรียนใหม่"}</h2>
       </div>
+
+      {state.message ? (
+        <div
+          role="status"
+          className={`mt-4 flex items-start gap-2 rounded-2xl border px-3 py-2 text-sm font-bold leading-6 ${
+            state.status === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-rose-200 bg-rose-50 text-rose-700"
+          }`}
+        >
+          {state.status === "success" ? <CheckCircle2 className="mt-0.5 size-4 shrink-0" /> : <AlertCircle className="mt-0.5 size-4 shrink-0" />}
+          <span>{state.message}</span>
+        </div>
+      ) : null}
 
       {classroom ? <input type="hidden" name="id" value={classroom.id} /> : null}
       <div className="mt-5 grid gap-3">

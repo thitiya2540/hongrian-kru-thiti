@@ -22,6 +22,11 @@ const STUDENT_AVATAR_EXTENSIONS: Record<string, string> = {
   "image/webp": "webp",
 };
 
+export type ClassroomFormState = {
+  status?: "success" | "error";
+  message?: string;
+};
+
 function value(formData: FormData, key: string) {
   const formValue = formData.get(key);
   return typeof formValue === "string" ? formValue : undefined;
@@ -48,8 +53,8 @@ async function getAuthenticatedClient() {
   return { supabase, userId: data.user.id };
 }
 
-export async function saveClassroomAction(formData: FormData) {
-  const payload = classroomFormSchema.parse({
+export async function saveClassroomAction(_previousState: ClassroomFormState, formData: FormData): Promise<ClassroomFormState> {
+  const parsed = classroomFormSchema.safeParse({
     id: optionalId(formData, "id"),
     name: value(formData, "name"),
     gradeLevel: value(formData, "gradeLevel"),
@@ -57,25 +62,49 @@ export async function saveClassroomAction(formData: FormData) {
     academicTermId: value(formData, "academicTermId"),
     color: value(formData, "color") ?? "#6956D9",
   });
-  const { supabase, userId } = await getAuthenticatedClient();
 
-  const request = {
-    name: payload.name,
-    grade_level: payload.gradeLevel,
-    room: payload.room,
-    academic_term_id: payload.academicTermId,
-    teacher_id: userId,
-    color: payload.color,
-    is_active: true,
-  };
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: parsed.error.issues[0]?.message ?? "กรุณาตรวจสอบข้อมูลห้องเรียนอีกครั้ง",
+    };
+  }
 
-  const result = payload.id
-    ? await supabase.from("classrooms").update(request).eq("id", payload.id)
-    : await supabase.from("classrooms").insert(request);
+  try {
+    const payload = parsed.data;
+    const { supabase, userId } = await getAuthenticatedClient();
 
-  if (result.error) throw new Error(result.error.message);
-  revalidatePath("/classrooms");
-  revalidatePath("/dashboard");
+    const request = {
+      name: payload.name,
+      grade_level: payload.gradeLevel,
+      room: payload.room,
+      academic_term_id: payload.academicTermId,
+      teacher_id: userId,
+      color: payload.color,
+      is_active: true,
+    };
+
+    const result = payload.id
+      ? await supabase.from("classrooms").update(request).eq("id", payload.id)
+      : await supabase.from("classrooms").insert(request);
+
+    if (result.error) {
+      if (result.error.code === "23505") {
+        return { status: "error", message: "มีห้องเรียนระดับชั้นและห้องนี้ในภาคเรียนนี้แล้ว กรุณาเปลี่ยนระดับชั้นหรือเลขห้อง" };
+      }
+
+      return { status: "error", message: `บันทึกห้องเรียนไม่สำเร็จ: ${result.error.message}` };
+    }
+
+    revalidatePath("/classrooms");
+    revalidatePath("/dashboard");
+    return { status: "success", message: payload.id ? "บันทึกการแก้ไขห้องเรียนแล้ว" : "เพิ่มห้องเรียนเรียบร้อยแล้ว" };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "บันทึกห้องเรียนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
+    };
+  }
 }
 
 export async function toggleClassroomAction(formData: FormData) {

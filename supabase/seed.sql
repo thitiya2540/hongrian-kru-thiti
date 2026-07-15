@@ -1,0 +1,3 @@
+-- Production database: intentionally no demo data.
+-- Create the teacher account in Supabase Auth, then add classrooms,
+-- subjects, students, assignments, and scores through the application.

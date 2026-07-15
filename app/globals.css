@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-noto-sans-thai), ui-sans-serif, system-ui, sans-serif;
+  --color-quest-purple: #6956d9;
+  --color-quest-purple-dark: #4d3cb5;
+  --color-quest-navy: #253364;
+  --color-quest-sky: #dff7ff;
+  --color-quest-mint: #dff8e8;
+  --color-quest-amber: #ffbd3e;
+}
+
+:root {
+  --background: #f4f7ff;
+  --foreground: #1e2851;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-noto-sans-thai), ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+select,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid rgb(105 86 217 / 35%);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #dcd5ff;
+  color: #352679;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-drift {
+  animation: drift 7s ease-in-out infinite;
+}
+
+.soft-scrollbar {
+  scrollbar-color: #c8c2ee transparent;
+  scrollbar-width: thin;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  body {
+    color: #111827;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr,
+  article,
+  section {
+    break-inside: avoid;
+  }
+}

@@ -243,7 +243,18 @@ export async function saveStudentAction(formData: FormData) {
   revalidatePath("/quick-score");
 }
 
-function csvImportErrorMessage(message: string) {
+type SupabaseActionError = {
+  message?: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+};
+
+function csvImportErrorMessage(error: string | SupabaseActionError) {
+  const message = typeof error === "string" ? error : (error.message ?? "");
+  const code = typeof error === "string" ? "" : (error.code ?? "");
+  const details = typeof error === "string" ? "" : (error.details ?? "");
+  const raw = [code, message, details].filter(Boolean).join(" · ");
   const messages: Record<string, string> = {
     classroom_not_allowed: "คุณไม่มีสิทธิ์นำเข้าข้อมูลในห้องเรียนนี้",
     csv_rows_required: "ไม่พบรายชื่อนักเรียนในไฟล์",
@@ -253,7 +264,11 @@ function csvImportErrorMessage(message: string) {
   };
   if (messages[message]) return messages[message];
   if (message.startsWith("csv_invalid_")) return "พบข้อมูลไม่ถูกต้องในไฟล์ กรุณาตรวจข้อมูลตามไฟล์ตัวอย่างแล้วลองใหม่";
-  return "นำเข้ารายชื่อนักเรียนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
+  if (code === "23505" || raw.includes("duplicate key")) return `พบข้อมูลซ้ำในฐานข้อมูล ระบบยังไม่ได้บันทึกข้อมูล (${details || message})`;
+  if (code === "23503" || raw.includes("foreign key")) return "ห้องเรียนปลายทางหรือข้อมูลที่อ้างอิงไม่ตรงกับฐานข้อมูล กรุณารีเฟรชหน้าแล้วลองใหม่";
+  if (raw.includes("row-level security")) return "สิทธิ์ฐานข้อมูลยังไม่อนุญาตให้นำเข้ารายชื่อนักเรียน กรุณาแจ้งผู้ดูแลระบบตรวจ policy";
+  if (raw.includes("permission denied")) return "สิทธิ์ฐานข้อมูลยังไม่พอสำหรับการนำเข้ารายชื่อ กรุณาแจ้งผู้ดูแลระบบตรวจ permission";
+  return `นำเข้ารายชื่อนักเรียนไม่สำเร็จ: ${message || "ไม่ทราบสาเหตุจากฐานข้อมูล"}`;
 }
 
 export async function importStudentsCsvAction(_previousState: StudentCsvImportState, formData: FormData): Promise<StudentCsvImportState> {
@@ -283,7 +298,7 @@ export async function importStudentsCsvAction(_previousState: StudentCsvImportSt
         pin: row.pin,
       })) as Json,
     });
-    if (error) return { status: "error", message: csvImportErrorMessage(error.message) };
+    if (error) return { status: "error", message: csvImportErrorMessage(error) };
 
     revalidatePath("/students");
     revalidatePath("/classrooms");

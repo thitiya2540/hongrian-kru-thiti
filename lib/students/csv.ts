@@ -83,7 +83,6 @@ export function parseStudentCsv(source: string): StudentCsvParseResult {
     pin: (cells[6] ?? "").trim(),
   }));
   const errors: string[] = [];
-  const studentCodes = new Set<string>();
 
   for (const row of rows) {
     if (row.studentCode.length < 2 || row.studentCode.length > 40) errors.push(`แถว ${row.rowNumber}: รหัสนักเรียนต้องมี 2-40 ตัวอักษร`);
@@ -93,8 +92,6 @@ export function parseStudentCsv(source: string): StudentCsvParseResult {
     if (row.nickname.length > 80) errors.push(`แถว ${row.rowNumber}: ชื่อเล่นยาวเกิน 80 ตัวอักษร`);
     if (row.numberInClass && (!/^\d+$/.test(row.numberInClass) || Number(row.numberInClass) < 1 || Number(row.numberInClass) > 999)) errors.push(`แถว ${row.rowNumber}: เลขที่ต้องเป็นจำนวนเต็มบวก`);
     if (!/^\d{4,12}$/.test(row.pin)) errors.push(`แถว ${row.rowNumber}: PIN ต้องเป็นตัวเลข 4-12 หลัก`);
-    if (studentCodes.has(row.studentCode)) errors.push(`แถว ${row.rowNumber}: รหัสนักเรียนซ้ำในไฟล์ (${row.studentCode})`);
-    studentCodes.add(row.studentCode);
   }
 
   return { rows, errors };

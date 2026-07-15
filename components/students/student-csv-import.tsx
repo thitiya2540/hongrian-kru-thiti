@@ -55,7 +55,7 @@ export function StudentCsvImport({ classrooms, disabled = false }: { classrooms:
       <a href="/api/students/csv-template" className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-2xl bg-violet-50 px-3 text-xs font-extrabold text-violet-700 transition hover:bg-violet-100">
         <Download className="size-4" /> ดาวน์โหลดไฟล์ต้นแบบ CSV
       </a>
-      <p className="mt-2 text-xs leading-5 text-slate-400">กรอกข้อมูลในไฟล์ต้นแบบ ห้ามเปลี่ยนชื่อหรือเรียงลำดับหัวตาราง และต้องระบุ PIN เป็นตัวเลข 4-12 หลัก</p>
+      <p className="mt-2 text-xs leading-5 text-slate-400">กรอกข้อมูลในไฟล์ต้นแบบ ห้ามเปลี่ยนชื่อหรือเรียงลำดับหัวตาราง และต้องระบุ PIN เป็นตัวเลข 4-12 หลัก รหัสนักเรียนและ PIN ซ้ำกันได้</p>
 
       <form action={formAction} className="mt-4 grid gap-3">
         <label className="grid gap-1.5 text-sm font-bold text-slate-600">
@@ -85,7 +85,7 @@ export function StudentCsvImport({ classrooms, disabled = false }: { classrooms:
         {state.message ? <div role="status" className={`rounded-2xl p-3 text-xs font-bold leading-5 ${state.status === "success" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>{state.message}</div> : null}
 
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs leading-5 text-slate-400">ถ้ารหัสซ้ำหรือข้อมูลผิด ระบบจะไม่เพิ่มนักเรียนบางส่วน</p>
+          <p className="text-xs leading-5 text-slate-400">ถ้าเลขประจำตัวซ้ำหรือข้อมูลผิด ระบบจะไม่เพิ่มนักเรียนบางส่วน</p>
           <ImportButton disabled={disabled || classrooms.length === 0 || !hasValidPreview} />
         </div>
       </form>

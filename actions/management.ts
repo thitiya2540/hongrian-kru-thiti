@@ -248,8 +248,6 @@ function csvImportErrorMessage(message: string) {
     classroom_not_allowed: "คุณไม่มีสิทธิ์นำเข้าข้อมูลในห้องเรียนนี้",
     csv_rows_required: "ไม่พบรายชื่อนักเรียนในไฟล์",
     csv_rows_limit_exceeded: "นำเข้าได้ครั้งละไม่เกิน 200 คน",
-    csv_duplicate_student_code: "พบรหัสนักเรียนซ้ำกันในไฟล์ ระบบยังไม่ได้บันทึกข้อมูล",
-    csv_student_code_already_exists: "มีรหัสนักเรียนนี้อยู่ในระบบแล้ว ระบบยังไม่ได้บันทึกข้อมูล",
     csv_duplicate_identity_number: "พบเลขประจำตัวซ้ำกันในไฟล์ ระบบยังไม่ได้บันทึกข้อมูล",
     csv_identity_number_already_exists: "มีเลขประจำตัวนี้อยู่ในระบบแล้ว ระบบยังไม่ได้บันทึกข้อมูล",
   };
